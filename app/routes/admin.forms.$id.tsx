@@ -2,16 +2,14 @@ import React from 'react';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, useRevalidator } from '@remix-run/react';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
   Chip,
   Container,
   Divider,
-  Grid,
   IconButton,
-  Paper,
   Stack,
   TextField,
   Typography,
@@ -140,15 +138,29 @@ export default function FormEditor() {
   const [addMenuAnchor, setAddMenuAnchor] = useState<null | HTMLElement>(null);
   const [title, setTitle] = useState(form.title);
   const [description, setDescription] = useState(form.description || '');
+  const [fields, setFields] = useState(form.fields);
+  const fieldUpdateTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const selectedField = form.fields.find((f) => f.id === selectedFieldId) ?? null;
+  useEffect(() => {
+    setTitle(form.title);
+    setDescription(form.description || '');
+    setFields(form.fields);
+  }, [form]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(fieldUpdateTimersRef.current).forEach((timer) => clearTimeout(timer));
+    };
+  }, []);
+
+  const selectedField = fields.find((f) => f.id === selectedFieldId) ?? null;
 
   const doAction = useCallback(
-    async (body: Record<string, string>) => {
+    async (body: Record<string, string>, options?: { revalidate?: boolean }) => {
       const fd = new FormData();
       Object.entries(body).forEach(([k, v]) => fd.append(k, v));
       const res = await fetch(`/admin/forms/${form.id}`, { method: 'POST', body: fd });
-      if (res.ok) revalidator.revalidate();
+      if (res.ok && options?.revalidate !== false) revalidator.revalidate();
       return res.ok;
     },
     [form.id, revalidator],
@@ -172,7 +184,19 @@ export default function FormEditor() {
   const handleTogglePublish = () => doAction({ intent: 'toggle-publish' });
 
   const handleFieldUpdate = async (fieldId: string, type: FieldType, options: FormField['options']) => {
-    await doAction({ intent: 'update-field', fieldId, type, options: JSON.stringify(options) });
+    setFields((prev) =>
+      prev.map((field) => (field.id === fieldId ? { ...field, type, options } : field)),
+    );
+
+    const existingTimer = fieldUpdateTimersRef.current[fieldId];
+    if (existingTimer) clearTimeout(existingTimer);
+
+    fieldUpdateTimersRef.current[fieldId] = setTimeout(() => {
+      void doAction(
+        { intent: 'update-field', fieldId, type, options: JSON.stringify(options) },
+        { revalidate: false },
+      );
+    }, 250);
   };
 
   const handleFieldDelete = async (fieldId: string) => {
@@ -275,7 +299,7 @@ export default function FormEditor() {
           <Divider />
           <Box sx={{ flexGrow: 1, overflow: 'auto', p: 1 }}>
             <FieldList
-              fields={form.fields}
+              fields={fields}
               selectedId={selectedFieldId}
               onSelect={setSelectedFieldId}
               onReorder={handleReorder}
@@ -290,7 +314,7 @@ export default function FormEditor() {
             LIVE PREVIEW
           </Typography>
           <Container maxWidth="sm">
-            <FormPreview form={form} />
+            <FormPreview form={{ ...form, fields }} />
           </Container>
         </Box>
 
