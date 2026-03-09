@@ -16,7 +16,7 @@ import {
   SmartToy as SmartToyIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
-import type { FormField, FieldType, FieldOptions } from '~/types';
+import type { FieldType, FieldOptions } from '~/types';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -71,7 +71,7 @@ export function AiChat({ onAddField }: Props) {
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', text: '⚠️ Something went wrong. Make sure your OpenAI API key is set.' },
+        { role: 'assistant', text: '⚠️ Something went wrong. Please try again.' },
       ]);
     } finally {
       setLoading(false);

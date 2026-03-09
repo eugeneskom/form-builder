@@ -82,4 +82,25 @@ In the Form Editor, click the robot icon in the top right. You can type instruct
 - "Add a required phone number field"
 - "Add a multiline text area for comments"
 - "Add a number field for age with min value 18"
-# form-builder
+
+## 🚀 Deployment
+
+### Vercel Deployment
+
+This project is optimized for Vercel deployment. See [docs/VERCEL_DEPLOYMENT.md](docs/VERCEL_DEPLOYMENT.md) for:
+- Database setup (PostgreSQL, MySQL, etc)
+- Environment variables configuration
+- Step-by-step deployment guide
+- Troubleshooting
+
+**Quick Start:**
+1. Choose a cloud database (Vercel Postgres, Neon, Supabase, etc)
+2. Update Prisma schema with new database provider
+3. Push to GitHub
+4. Connect to Vercel and set environment variables
+5. Deploy!
+
+## Documentation
+
+- [AI Chat Feature](docs/AI_CHAT.md) - How to use and extend the AI assistant
+- [Vercel Deployment](docs/VERCEL_DEPLOYMENT.md) - Deploy to production
